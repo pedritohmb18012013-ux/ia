@@ -1,6 +1,9 @@
 const chat = document.getElementById("chat");
 const input = document.getElementById("messageInput");
 const button = document.getElementById("sendButton");
+const status = document.getElementById("status");
+
+let sending = false;
 
 function addMessage(text, type) {
   const message = document.createElement("div");
@@ -10,47 +13,52 @@ function addMessage(text, type) {
 
   chat.appendChild(message);
   chat.scrollTop = chat.scrollHeight;
+
+  return message;
 }
 
-function respond(question) {
-  const q = question.toLowerCase();
-
-  if (q.includes("oi") || q.includes("olá")) {
-    return "Olá! 👋 Como posso ajudar você nos estudos?";
-  }
-
-  if (q.includes("quanto é") || q.includes("calcule")) {
-    return "Posso ajudar com cálculos. Em breve teremos uma IA completa para resolver suas questões.";
-  }
-
-  if (q.includes("matemática")) {
-    return "Claro! 📐 Posso ajudar com Matemática, incluindo contas, equações, porcentagem e outros assuntos.";
-  }
-
-  if (q.includes("história")) {
-    return "Claro! 📚 Posso ajudar a estudar História e explicar os assuntos de forma simples.";
-  }
-
-  if (q.includes("ciências")) {
-    return "Claro! 🔬 Posso ajudar com Ciências e explicar os conteúdos passo a passo.";
-  }
-
-  return "Entendi! 🤖 Ainda estou sendo configurada. Em breve vou conseguir responder perguntas de várias matérias.";
-}
-
-function sendMessage() {
+async function sendMessage() {
   const text = input.value.trim();
 
-  if (!text) return;
+  if (!text || sending) return;
+
+  sending = true;
+  button.disabled = true;
 
   addMessage(text, "user");
 
   input.value = "";
 
-  setTimeout(() => {
-    const answer = respond(text);
-    addMessage(answer, "ai");
-  }, 500);
+  const loading = addMessage("🤔 Pensando...", "ai");
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: text
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Erro ao consultar a IA");
+    }
+
+    loading.textContent = data.answer;
+  } catch (error) {
+    console.error(error);
+
+    loading.textContent =
+      "⚠️ Não consegui responder agora. Tente novamente.";
+  }
+
+  sending = false;
+  button.disabled = false;
+  input.focus();
 }
 
 button.addEventListener("click", sendMessage);
@@ -60,3 +68,7 @@ input.addEventListener("keydown", (event) => {
     sendMessage();
   }
 });
+
+if (status) {
+  status.textContent = "IA pronta para ajudar";
+}
