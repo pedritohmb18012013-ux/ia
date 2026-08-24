@@ -14,10 +14,12 @@ export default async function handler(req, res) {
       });
     }
 
-    // Resposta fixa para a pergunta sobre o criador
+    // Resposta fixa para perguntas sobre o criador do projeto
     if (
       message &&
-      /quem (criou|fez|desenvolveu) você|quem é seu criador|quem te criou/i.test(message)
+      /quem (criou|fez|desenvolveu) você|quem é seu criador|quem te criou/i.test(
+        message
+      )
     ) {
       return res.status(200).json({
         answer:
@@ -25,14 +27,14 @@ export default async function handler(req, res) {
       });
     }
 
-    const content = [];
-
-    content.push({
-      type: "text",
-      text:
-        message ||
-        "Analise esta imagem e explique o conteúdo em português do Brasil."
-    });
+    const content = [
+      {
+        type: "text",
+        text:
+          message ||
+          "Analise esta imagem e explique o conteúdo em português do Brasil."
+      }
+    ];
 
     if (image) {
       if (
@@ -59,6 +61,46 @@ export default async function handler(req, res) {
       });
     }
 
+    const systemPrompt = `
+Você é um assistente de inteligência artificial geral.
+
+REGRA PRINCIPAL:
+Responda SEMPRE em português do Brasil.
+
+Não misture português com inglês, espanhol ou outros idiomas.
+
+Somente use outro idioma quando o próprio usuário pedir explicitamente uma tradução ou pedir uma resposta naquele idioma.
+
+Você pode ajudar com:
+- estudos
+- matemática
+- português
+- história
+- geografia
+- ciências
+- programação
+- tecnologia
+- escrita
+- criatividade
+- dúvidas gerais
+- explicações
+- resolução de problemas
+- análise de imagens
+
+Quando receber uma imagem, analise cuidadosamente o conteúdo.
+
+Se alguma parte da imagem estiver ilegível, diga isso claramente.
+
+Não invente informações.
+
+Se perguntarem quem criou, fez ou desenvolveu esta IA ou este projeto, responda:
+
+"Eu fui criada e desenvolvida para este projeto por Pedro Henrique Machado Bittencourt. 🤖"
+
+Não diga que Pedro Henrique Machado Bittencourt criou o modelo de IA utilizado pelo serviço.
+`;
+
+    // PRIMEIRA RESPOSTA
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -75,48 +117,7 @@ export default async function handler(req, res) {
           messages: [
             {
               role: "system",
-              content: `
-REGRA ABSOLUTA DE IDIOMA:
-
-Você DEVE responder SEMPRE EXCLUSIVAMENTE em PORTUGUÊS DO BRASIL.
-
-NÃO escreva em inglês.
-NÃO misture inglês com português.
-NÃO escreva em espanhol.
-NÃO misture idiomas.
-
-Somente use outro idioma se o usuário pedir explicitamente para traduzir ou responder nesse idioma.
-
-Você é um assistente de inteligência artificial geral.
-
-Pode ajudar com:
-- estudos
-- matemática
-- português
-- história
-- geografia
-- ciências
-- programação
-- tecnologia
-- escrita
-- criatividade
-- informações gerais
-- explicações
-- resolução de problemas
-- análise de imagens
-
-Se receber uma imagem, analise cuidadosamente o conteúdo e explique o que conseguir identificar.
-
-Se alguma parte da imagem estiver ilegível, informe isso claramente em português.
-
-Não invente informações.
-
-Se perguntarem quem criou ou desenvolveu esta IA ou este projeto, responda exatamente:
-
-"Eu fui criada e desenvolvida para este projeto por Pedro Henrique Machado Bittencourt. 🤖"
-
-Nunca diga que Pedro Henrique Machado Bittencourt criou o modelo de IA utilizado pelo serviço.
-              `
+              content: systemPrompt
             },
             {
               role: "user",
@@ -140,13 +141,88 @@ Nunca diga que Pedro Henrique Machado Bittencourt criou o modelo de IA utilizado
       });
     }
 
-    const answer =
-      data.choices?.[0]?.message?.content;
+    let answer =
+      data.choices?.[0]?.message?.content?.trim();
+
+    if (!answer) {
+      return res.status(200).json({
+        answer: "Não consegui gerar uma resposta."
+      });
+    }
+
+    /*
+     * SEGUNDA VERIFICAÇÃO
+     *
+     * Pedimos para outro processamento revisar
+     * a resposta e devolver somente português.
+     */
+    const verificationResponse = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+        },
+
+        body: JSON.stringify({
+          model: "qwen/qwen3.6-27b",
+
+          messages: [
+            {
+              role: "system",
+              content: `
+Você é o revisor final de respostas de uma IA.
+
+Sua ÚNICA função é verificar a resposta recebida.
+
+REGRAS ABSOLUTAS:
+
+1. A resposta final deve estar SOMENTE em português do Brasil.
+2. Não deixe palavras ou frases em inglês.
+3. Não deixe palavras ou frases em espanhol.
+4. Não misture idiomas.
+5. Preserve o significado original.
+6. Não acrescente informações novas.
+7. Não explique que você fez uma revisão.
+8. Retorne somente a resposta final corrigida.
+
+EXCEÇÃO:
+Se a resposta contiver nomes próprios, nomes de empresas, nomes de produtos, comandos de programação, códigos, termos técnicos ou palavras que precisam permanecer em outro idioma para manter o significado, eles podem permanecer.
+`
+            },
+            {
+              role: "user",
+              content: answer
+            }
+          ],
+
+          temperature: 0.1,
+          max_completion_tokens: 900
+        })
+      }
+    );
+
+    const verificationData =
+      await verificationResponse.json();
+
+    if (verificationResponse.ok) {
+      const verifiedAnswer =
+        verificationData.choices?.[0]?.message?.content?.trim();
+
+      if (verifiedAnswer) {
+        answer = verifiedAnswer;
+      }
+    } else {
+      console.error(
+        "Erro na segunda verificação:",
+        verificationData
+      );
+    }
 
     return res.status(200).json({
-      answer:
-        answer ||
-        "Não consegui gerar uma resposta."
+      answer
     });
 
   } catch (error) {
