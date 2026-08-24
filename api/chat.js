@@ -6,11 +6,40 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message } = req.body;
+    const { message, image } = req.body;
 
-    if (!message || typeof message !== "string") {
+    if (!message && !image) {
       return res.status(400).json({
-        error: "Mensagem inválida"
+        error: "Envie uma mensagem ou uma imagem."
+      });
+    }
+
+    const content = [];
+
+    content.push({
+      type: "text",
+      text: message || "Analise esta imagem e explique o que aparece nela."
+    });
+
+    if (image) {
+      if (typeof image !== "string" || !image.startsWith("data:image/")) {
+        return res.status(400).json({
+          error: "Imagem inválida."
+        });
+      }
+
+      // Limite de segurança: aproximadamente 15 MB em Base64
+      if (image.length > 15 * 1024 * 1024) {
+        return res.status(400).json({
+          error: "A imagem é muito grande. Escolha uma foto menor."
+        });
+      }
+
+      content.push({
+        type: "image_url",
+        image_url: {
+          url: image
+        }
       });
     }
 
@@ -18,25 +47,29 @@ export default async function handler(req, res) {
       "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
         },
+
         body: JSON.stringify({
-          model: "openai/gpt-oss-20b",
+          model: "qwen/qwen3.6-27b",
+
           messages: [
             {
               role: "system",
               content:
-                "Você é a IA Escolar. Ajude alunos com Matemática, Português, História, Geografia, Ciências e outras matérias. Explique de forma simples, correta e educativa."
+                "Você é a IA Escolar. Ajude alunos com Matemática, Português, História, Geografia, Ciências e outras matérias. Explique de forma simples, correta e educativa. Quando receber uma foto de uma questão, leia o conteúdo da imagem e explique a resolução passo a passo. Não invente informações que não estejam legíveis na imagem."
             },
             {
               role: "user",
-              content: message
+              content
             }
           ],
+
           temperature: 0.7,
-          max_tokens: 500
+          max_completion_tokens: 800
         })
       }
     );
@@ -44,24 +77,24 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error(data);
+      console.error("Erro Groq:", data);
 
       return res.status(response.status).json({
-        error: "Erro ao consultar a IA"
+        error: "Erro ao consultar a IA."
       });
     }
 
     const answer = data.choices?.[0]?.message?.content;
 
     return res.status(200).json({
-      answer: answer || "Não consegui gerar uma resposta."
+      answer: answer || "Não consegui analisar o conteúdo."
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Erro interno:", error);
 
     return res.status(500).json({
-      error: "Erro interno do servidor"
+      error: "Erro interno do servidor."
     });
   }
 }
