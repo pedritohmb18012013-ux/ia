@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       type: "text",
       text:
         message ||
-        "Analise esta imagem e explique o conteúdo em português do Brasil."
+        "Analise esta imagem e explique o que você consegue identificar nela."
     });
 
     if (image) {
@@ -65,7 +65,7 @@ export default async function handler(req, res) {
             {
               role: "system",
               content:
-                "Você é a IA Escolar. RESPONDA SEMPRE EM PORTUGUÊS DO BRASIL. Nunca responda em inglês, espanhol ou outro idioma, exceto se o usuário pedir explicitamente para usar outro idioma. Ajude alunos com Matemática, Português, História, Geografia, Ciências e outras matérias. Explique de maneira simples, clara, correta e educativa. Quando receber uma foto de uma questão, leia o conteúdo da imagem e explique a resolução passo a passo. Se alguma parte da imagem estiver ilegível, informe isso ao usuário em português. Não invente informações que não estejam presentes ou legíveis na imagem."
+                "Você é um assistente de inteligência artificial geral. Responda SEMPRE em português do Brasil, a menos que o usuário peça explicitamente outro idioma. Você pode ajudar com estudos, Matemática, Português, História, Geografia, Ciências, programação, tecnologia, escrita, criatividade, informações gerais, explicações, resolução de problemas e análise de imagens. Seja claro, útil, educado e objetivo. Quando receber uma imagem, analise cuidadosamente o conteúdo e explique o que conseguir identificar. Se alguma parte estiver ilegível ou não puder ser determinada com segurança, diga isso claramente. Não invente informações."
             },
             {
               role: "user",
@@ -95,7 +95,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       answer:
         answer ||
-        "Não consegui analisar o conteúdo."
+        "Não consegui gerar uma resposta."
     });
 
   } catch (error) {
