@@ -2,8 +2,11 @@ const chat = document.getElementById("chat");
 const input = document.getElementById("messageInput");
 const button = document.getElementById("sendButton");
 const status = document.getElementById("status");
+const imageInput = document.getElementById("imageInput");
+const imageButton = document.getElementById("imageButton");
 
 let sending = false;
+let selectedImage = null;
 
 function addMessage(text, type) {
   const message = document.createElement("div");
@@ -17,28 +20,83 @@ function addMessage(text, type) {
   return message;
 }
 
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+
+    reader.readAsDataURL(file);
+  });
+}
+
+imageButton.addEventListener("click", () => {
+  imageInput.click();
+});
+
+imageInput.addEventListener("change", async () => {
+  const file = imageInput.files[0];
+
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    alert("Escolha uma imagem.");
+    imageInput.value = "";
+    return;
+  }
+
+  // Limita a foto original a 8 MB
+  if (file.size > 8 * 1024 * 1024) {
+    alert("A foto é muito grande. Escolha uma imagem com menos de 8 MB.");
+    imageInput.value = "";
+    return;
+  }
+
+  try {
+    selectedImage = await fileToBase64(file);
+
+    addMessage("📷 Foto selecionada. Agora faça sua pergunta.", "user");
+
+  } catch (error) {
+    console.error(error);
+    alert("Não foi possível carregar a foto.");
+  }
+});
+
 async function sendMessage() {
   const text = input.value.trim();
 
-  if (!text || sending) return;
+  if ((!text && !selectedImage) || sending) return;
 
   sending = true;
   button.disabled = true;
+  imageButton.disabled = true;
 
-  addMessage(text, "user");
+  if (text) {
+    addMessage(text, "user");
+  }
 
   input.value = "";
 
-  const loading = addMessage("🤔 Pensando...", "ai");
+  const imageToSend = selectedImage;
+
+  selectedImage = null;
+  imageInput.value = "";
+
+  const loading = addMessage("🤔 Analisando...", "ai");
 
   try {
     const response = await fetch("/api/chat", {
       method: "POST",
+
       headers: {
         "Content-Type": "application/json"
       },
+
       body: JSON.stringify({
-        message: text
+        message: text,
+        image: imageToSend
       })
     });
 
@@ -49,15 +107,18 @@ async function sendMessage() {
     }
 
     loading.textContent = data.answer;
+
   } catch (error) {
     console.error(error);
 
     loading.textContent =
-      "⚠️ Não consegui responder agora. Tente novamente.";
+      "⚠️ Não consegui analisar agora. Tente novamente.";
   }
 
   sending = false;
   button.disabled = false;
+  imageButton.disabled = false;
+
   input.focus();
 }
 
