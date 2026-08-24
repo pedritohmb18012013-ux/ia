@@ -18,20 +18,25 @@ export default async function handler(req, res) {
 
     content.push({
       type: "text",
-      text: message || "Analise esta imagem e explique o que aparece nela."
+      text:
+        message ||
+        "Analise esta imagem e explique o conteúdo em português do Brasil."
     });
 
     if (image) {
-      if (typeof image !== "string" || !image.startsWith("data:image/")) {
+      if (
+        typeof image !== "string" ||
+        !image.startsWith("data:image/")
+      ) {
         return res.status(400).json({
           error: "Imagem inválida."
         });
       }
 
-      // Limite de segurança: aproximadamente 15 MB em Base64
       if (image.length > 15 * 1024 * 1024) {
         return res.status(400).json({
-          error: "A imagem é muito grande. Escolha uma foto menor."
+          error:
+            "A imagem é muito grande. Escolha uma foto menor."
         });
       }
 
@@ -60,7 +65,7 @@ export default async function handler(req, res) {
             {
               role: "system",
               content:
-                "Você é a IA Escolar. Ajude alunos com Matemática, Português, História, Geografia, Ciências e outras matérias. Explique de forma simples, correta e educativa. Quando receber uma foto de uma questão, leia o conteúdo da imagem e explique a resolução passo a passo. Não invente informações que não estejam legíveis na imagem."
+                "Você é a IA Escolar. RESPONDA SEMPRE EM PORTUGUÊS DO BRASIL. Nunca responda em inglês, espanhol ou outro idioma, exceto se o usuário pedir explicitamente para usar outro idioma. Ajude alunos com Matemática, Português, História, Geografia, Ciências e outras matérias. Explique de maneira simples, clara, correta e educativa. Quando receber uma foto de uma questão, leia o conteúdo da imagem e explique a resolução passo a passo. Se alguma parte da imagem estiver ilegível, informe isso ao usuário em português. Não invente informações que não estejam presentes ou legíveis na imagem."
             },
             {
               role: "user",
@@ -84,10 +89,13 @@ export default async function handler(req, res) {
       });
     }
 
-    const answer = data.choices?.[0]?.message?.content;
+    const answer =
+      data.choices?.[0]?.message?.content;
 
     return res.status(200).json({
-      answer: answer || "Não consegui analisar o conteúdo."
+      answer:
+        answer ||
+        "Não consegui analisar o conteúdo."
     });
 
   } catch (error) {
