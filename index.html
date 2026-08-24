@@ -18,7 +18,7 @@
 
       <div>
         <h1>IA Escolar</h1>
-        <p id="status">Preparando a IA...</p>
+        <p id="status">IA pronta para ajudar</p>
       </div>
     </header>
 
@@ -28,12 +28,32 @@
         Olá! 👋<br><br>
         Sou a IA Escolar. Posso ajudar com Matemática,
         História, Ciências, Português e outras matérias.
+        <br><br>
+        📷 Você também pode enviar uma foto de uma questão.
       </div>
 
     </main>
 
     <div class="input-area">
 
+      <!-- Botão para escolher foto -->
+      <button
+        id="imageButton"
+        type="button"
+        title="Enviar foto"
+      >
+        📷
+      </button>
+
+      <!-- Campo de seleção da imagem -->
+      <input
+        type="file"
+        id="imageInput"
+        accept="image/*"
+        hidden
+      >
+
+      <!-- Campo da pergunta -->
       <input
         type="text"
         id="messageInput"
@@ -41,7 +61,11 @@
         autocomplete="off"
       >
 
-      <button id="sendButton" type="button">
+      <!-- Botão enviar -->
+      <button
+        id="sendButton"
+        type="button"
+      >
         ➤
       </button>
 
@@ -49,7 +73,6 @@
 
   </div>
 
-  <!-- Importante: o script agora é um módulo -->
   <script type="module" src="script.js"></script>
 
 </body>
