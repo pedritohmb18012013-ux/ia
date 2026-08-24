@@ -14,13 +14,24 @@ export default async function handler(req, res) {
       });
     }
 
+    // Resposta fixa para a pergunta sobre o criador
+    if (
+      message &&
+      /quem (criou|fez|desenvolveu) você|quem é seu criador|quem te criou/i.test(message)
+    ) {
+      return res.status(200).json({
+        answer:
+          "Eu fui criada e desenvolvida para este projeto por Pedro Henrique Machado Bittencourt. 🤖"
+      });
+    }
+
     const content = [];
 
     content.push({
       type: "text",
       text:
         message ||
-        "Analise esta imagem e explique o que você consegue identificar nela."
+        "Analise esta imagem e explique o conteúdo em português do Brasil."
     });
 
     if (image) {
@@ -64,8 +75,48 @@ export default async function handler(req, res) {
           messages: [
             {
               role: "system",
-              content:
-                "Você é um assistente de inteligência artificial geral. Responda SEMPRE em português do Brasil, a menos que o usuário peça explicitamente outro idioma. Você pode ajudar com estudos, Matemática, Português, História, Geografia, Ciências, programação, tecnologia, escrita, criatividade, informações gerais, explicações, resolução de problemas e análise de imagens. Seja claro, útil, educado e objetivo. Quando receber uma imagem, analise cuidadosamente o conteúdo e explique o que conseguir identificar. Se alguma parte estiver ilegível ou não puder ser determinada com segurança, diga isso claramente. Não invente informações. IMPORTANTE: quando perguntarem quem criou, desenvolveu ou fez esta IA ou este projeto, responda: 'Eu fui criada e desenvolvida para este projeto por Pedro Henrique Machado Bittencourt.' Não afirme que Pedro Henrique Machado Bittencourt criou o modelo de IA ou a tecnologia da Groq."
+              content: `
+REGRA ABSOLUTA DE IDIOMA:
+
+Você DEVE responder SEMPRE EXCLUSIVAMENTE em PORTUGUÊS DO BRASIL.
+
+NÃO escreva em inglês.
+NÃO misture inglês com português.
+NÃO escreva em espanhol.
+NÃO misture idiomas.
+
+Somente use outro idioma se o usuário pedir explicitamente para traduzir ou responder nesse idioma.
+
+Você é um assistente de inteligência artificial geral.
+
+Pode ajudar com:
+- estudos
+- matemática
+- português
+- história
+- geografia
+- ciências
+- programação
+- tecnologia
+- escrita
+- criatividade
+- informações gerais
+- explicações
+- resolução de problemas
+- análise de imagens
+
+Se receber uma imagem, analise cuidadosamente o conteúdo e explique o que conseguir identificar.
+
+Se alguma parte da imagem estiver ilegível, informe isso claramente em português.
+
+Não invente informações.
+
+Se perguntarem quem criou ou desenvolveu esta IA ou este projeto, responda exatamente:
+
+"Eu fui criada e desenvolvida para este projeto por Pedro Henrique Machado Bittencourt. 🤖"
+
+Nunca diga que Pedro Henrique Machado Bittencourt criou o modelo de IA utilizado pelo serviço.
+              `
             },
             {
               role: "user",
@@ -73,7 +124,7 @@ export default async function handler(req, res) {
             }
           ],
 
-          temperature: 0.7,
+          temperature: 0.5,
           max_completion_tokens: 800
         })
       }
@@ -99,7 +150,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error("Erro interno do servidor:", error);
+    console.error("Erro interno:", error);
 
     return res.status(500).json({
       error: "Erro interno do servidor."
