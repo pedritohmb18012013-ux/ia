@@ -6,71 +6,70 @@ const status = document.getElementById("status");
 let sending = false;
 
 function addMessage(text, type) {
-const message = document.createElement("div");
+  const message = document.createElement("div");
 
-message.className = message ${type};
-message.textContent = text;
+  message.className = `message ${type}`;
+  message.textContent = text;
 
-chat.appendChild(message);
-chat.scrollTop = chat.scrollHeight;
+  chat.appendChild(message);
+  chat.scrollTop = chat.scrollHeight;
 
-return message;
+  return message;
 }
 
 async function sendMessage() {
-const text = input.value.trim();
+  const text = input.value.trim();
 
-if (!text || sending) return;
+  if (!text || sending) return;
 
-sending = true;
-button.disabled = true;
+  sending = true;
+  button.disabled = true;
 
-addMessage(text, "user");
+  addMessage(text, "user");
 
-input.value = "";
+  input.value = "";
 
-const loading = addMessage("🤔 Pensando...", "ai");
+  const loading = addMessage("🤔 Pensando...", "ai");
 
-try {
-const response = await fetch("/api/chat", {
-method: "POST",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify({
-message: text
-})
-});
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: text
+      })
+    });
 
-const data = await response.json();  
+    const data = await response.json();
 
-if (!response.ok) {  
-  throw new Error(data.error || "Erro ao consultar a IA");  
-}  
+    if (!response.ok) {
+      throw new Error(data.error || "Erro ao consultar a IA");
+    }
 
-loading.textContent = data.answer;
+    loading.textContent = data.answer;
 
-} catch (error) {
-console.error(error);
+  } catch (error) {
+    console.error(error);
 
-loading.textContent =  
-  "⚠️ Não consegui responder agora. Tente novamente.";
+    loading.textContent =
+      "⚠️ Não consegui responder agora. Tente novamente.";
+  }
 
-}
-
-sending = false;
-button.disabled = false;
-input.focus();
+  sending = false;
+  button.disabled = false;
+  input.focus();
 }
 
 button.addEventListener("click", sendMessage);
 
 input.addEventListener("keydown", (event) => {
-if (event.key === "Enter") {
-sendMessage();
-}
+  if (event.key === "Enter") {
+    sendMessage();
+  }
 });
 
 if (status) {
-status.textContent = "IA pronta para ajudar";
+  status.textContent = "IA pronta para ajudar";
 }
