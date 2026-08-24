@@ -1,79 +1,40 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!DOCTYPE html>  <html lang="pt-BR">  
+<head>  
+  <meta charset="UTF-8">  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>IA Escolar</title>    <link rel="stylesheet" href="style.css">  
+</head>  <body>    <div class="app">  <header>  
+  <div class="logo">🤖</div>  
 
-  <title>IA Escolar</title>
+  <div>  
+    <h1>IA Escolar</h1>  
+    <p id="status">Preparando a IA...</p>  
+  </div>  
+</header>  
 
-  <link rel="stylesheet" href="style.css">
-</head>
+<main id="chat">  
 
-<body>
+  <div class="message ai">  
+    Olá! 👋<br><br>  
+    Sou a IA Escolar. Posso ajudar com Matemática,  
+    História, Ciências, Português e outras matérias.  
+  </div>  
 
-  <div class="app">
+</main>  
 
-    <header>
-      <div class="logo">🤖</div>
+<div class="input-area">  
 
-      <div>
-        <h1>IA Escolar</h1>
-        <p id="status">IA pronta para ajudar</p>
-      </div>
-    </header>
+  <input  
+    type="text"  
+    id="messageInput"  
+    placeholder="Digite sua pergunta..."  
+    autocomplete="off"  
+  >  
 
-    <main id="chat">
+  <button id="sendButton" type="button">  
+    ➤  
+  </button>  
 
-      <div class="message ai">
-        Olá! 👋<br><br>
-        Sou a IA Escolar. Posso ajudar com Matemática,
-        História, Ciências, Português e outras matérias.
-        <br><br>
-        📷 Você também pode enviar uma foto de uma questão.
-      </div>
+</div>
 
-    </main>
-
-    <div class="input-area">
-
-      <!-- Botão para escolher foto -->
-      <button
-        id="imageButton"
-        type="button"
-        title="Enviar foto"
-      >
-        📷
-      </button>
-
-      <!-- Campo de seleção da imagem -->
-      <input
-        type="file"
-        id="imageInput"
-        accept="image/*"
-        hidden
-      >
-
-      <!-- Campo da pergunta -->
-      <input
-        type="text"
-        id="messageInput"
-        placeholder="Digite sua pergunta..."
-        autocomplete="off"
-      >
-
-      <!-- Botão enviar -->
-      <button
-        id="sendButton"
-        type="button"
-      >
-        ➤
-      </button>
-
-    </div>
-
-  </div>
-
-  <script type="module" src="script.js"></script>
-
-</body>
+  </div>    <!-- Importante: o script agora é um módulo -->    <script type="module" src="script.js"></script>  </body>  
 </html>
